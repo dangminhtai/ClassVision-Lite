@@ -25,6 +25,7 @@ QPushButton { background: @panel; border: 1px solid @gold; border-radius: 8px; p
 QPushButton:hover { background: @gold; color: @bg; }
 QTableWidget { background: transparent; border: none; gridline-color: rgba(255,255,255,0.08); }
 QHeaderView::section { background: @bg2; color: @ink2; padding: 8px; border: none; font-weight: bold; }
+QTableWidget::item:selected { background: @gold; color: @bg; font-weight: bold; }
 """
 for token, value in sorted(DESIGN_TOKENS.items(), key=lambda kv: -len(kv[0])):
     APP_STYLE = APP_STYLE.replace(f"@{token}", value)
@@ -65,7 +66,7 @@ def create_kpi_card(title: str, value: str, accent_color: str) -> QFrame:
 
 def create_attendance_table() -> QTableWidget:
     """Tạo bảng danh sách sinh viên điểm danh"""
-    cols = ["MSSV", "Họ tên", "Lớp", "Trạng thái", "Thời gian"]
+    cols = ["STT", "MSSV", "Họ tên", "Lớp", "Trạng thái", "Thời gian"]
     table = QTableWidget(0, len(cols))
     table.setHorizontalHeaderLabels(cols)
     
@@ -78,7 +79,8 @@ def create_attendance_table() -> QTableWidget:
     
     h_header = table.horizontalHeader()
     if h_header is not None:
-        h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch) # Cột Tên co giãn
+        h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents) # Cột STT vừa đủ
+        h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch) # Cột Tên co giãn
         
     return table
 

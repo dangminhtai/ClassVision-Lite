@@ -199,3 +199,70 @@ def get_all_classes():
     finally:
         if conn is not None:
             conn.close()
+
+def get_students(search_text=""):
+    """Lấy danh sách sinh viên, có hỗ trợ tìm kiếm theo MSSV hoặc Tên"""
+    import sqlite3
+    from config import DATA_DIR
+    db_path = DATA_DIR / "classvision.db"
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        if search_text:
+            query = f"%{search_text}%"
+            cursor.execute("SELECT student_id, full_name, class_name FROM students WHERE student_id LIKE ? OR full_name LIKE ? ORDER BY student_id", (query, query))
+        else:
+            cursor.execute("SELECT student_id, full_name, class_name FROM students ORDER BY student_id")
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Lỗi đọc DB: {e}")
+        return []
+    finally:
+        if conn: conn.close()
+
+def add_student(student_id, full_name, class_name):
+    import sqlite3
+    from config import DATA_DIR
+    db_path = DATA_DIR / "classvision.db"
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("INSERT INTO students (student_id, full_name, class_name) VALUES (?, ?, ?)", (student_id, full_name, class_name))
+        conn.commit()
+        return True, "Thêm thành công!"
+    except sqlite3.IntegrityError:
+        return False, "MSSV đã tồn tại!"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+
+def update_student(student_id, full_name, class_name):
+    import sqlite3
+    from config import DATA_DIR
+    db_path = DATA_DIR / "classvision.db"
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("UPDATE students SET full_name=?, class_name=? WHERE student_id=?", (full_name, class_name, student_id))
+        conn.commit()
+        return True, "Cập nhật thành công!"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+
+def delete_student(student_id):
+    import sqlite3
+    from config import DATA_DIR
+    db_path = DATA_DIR / "classvision.db"
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("DELETE FROM students WHERE student_id=?", (student_id,))
+        conn.commit()
+        return True, "Xóa thành công!"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+                    

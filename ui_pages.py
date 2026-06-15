@@ -87,8 +87,10 @@ def build_realtime_page() -> dict:
     }
 
 
+from PyQt6.QtWidgets import QLineEdit, QDialog, QFormLayout, QDialogButtonBox, QMessageBox
+
 def build_student_manage_page() -> dict:
-    """Xây dựng trang Quản lý Sinh viên (đơn giản)"""
+    """Xây dựng trang Quản lý Sinh viên với CRUD cơ bản"""
     page = QWidget()
     layout = QVBoxLayout(page)
     
@@ -96,14 +98,39 @@ def build_student_manage_page() -> dict:
     title.setObjectName("Title")
     layout.addWidget(title)
     
-    # Ở mức đồ án sinh viên, tạm thời chỉ hiển thị danh sách từ CSV
+    # -- Thanh công cụ (Toolbar) --
+    toolbar = QHBoxLayout()
+    
+    txt_search = QLineEdit()
+    txt_search.setPlaceholderText("Tìm kiếm theo MSSV hoặc Họ tên...")
+    txt_search.setStyleSheet("padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #0C101A;")
+    toolbar.addWidget(txt_search, stretch=2)
+    
+    btn_search = create_button("Tìm kiếm")
+    toolbar.addWidget(btn_search)
+    
+    toolbar.addSpacing(20)
+    
+    btn_add = create_button("+ Thêm mới")
+    btn_add.setStyleSheet("background: #34D399; color: #07090F; font-weight: bold; padding: 8px; border-radius: 8px;")
+    toolbar.addWidget(btn_add)
+    
+    btn_edit = create_button("Sửa")
+    toolbar.addWidget(btn_edit)
+    
+    btn_delete = create_button("Xóa")
+    btn_delete.setStyleSheet("background: #FB7185; color: #07090F; font-weight: bold; padding: 8px; border-radius: 8px;")
+    toolbar.addWidget(btn_delete)
+    
+    layout.addLayout(toolbar)
+    
+    # -- Bảng dữ liệu --
     table = create_attendance_table()
-    # Ẩn bớt các cột không cần thiết cho trang quản lý
+    # Ẩn bớt các cột Trạng thái, Thời gian cho trang này vì không dùng đến
     header = table.horizontalHeader()
     if header is not None:
-        table.setColumnHidden(3, True) # Ẩn cột trạng thái
-        table.setColumnHidden(4, True) # Ẩn cột thời gian
-    
+        table.setColumnHidden(4, True) # Trạng thái
+        table.setColumnHidden(5, True) # Thời gian
     layout.addWidget(table)
     
     # Nút làm mới
@@ -113,8 +140,59 @@ def build_student_manage_page() -> dict:
     return {
         "page": page,
         "table": table,
+        "txt_search": txt_search,
+        "btn_search": btn_search,
+        "btn_add": btn_add,
+        "btn_edit": btn_edit,
+        "btn_delete": btn_delete,
         "btn_refresh": btn_refresh
     }
+
+class StudentDialog(QDialog):
+    """Hộp thoại Thêm/Sửa Sinh Viên"""
+    def __init__(self, parent=None, student_data=None):
+        super().__init__(parent)
+        self.setWindowTitle("Thêm Sinh Viên" if student_data is None else "Sửa Sinh Viên")
+        self.setMinimumWidth(400)
+        self.setStyleSheet("background: #0C101A; color: white;")
+        
+        layout = QFormLayout(self)
+        
+        self.txt_mssv = QLineEdit()
+        self.txt_name = QLineEdit()
+        self.txt_class = QLineEdit()
+        
+        input_style = "padding: 8px; border: 1px solid #E2C285; border-radius: 4px; background: #07090F;"
+        self.txt_mssv.setStyleSheet(input_style)
+        self.txt_name.setStyleSheet(input_style)
+        self.txt_class.setStyleSheet(input_style)
+        
+        layout.addRow("MSSV:", self.txt_mssv)
+        layout.addRow("Họ Tên:", self.txt_name)
+        layout.addRow("Lớp:", self.txt_class)
+        
+        if student_data:
+            self.txt_mssv.setText(student_data[0])
+            self.txt_mssv.setReadOnly(True) # Không cho sửa MSSV khi đang Sửa
+            self.txt_name.setText(student_data[1])
+            self.txt_class.setText(student_data[2])
+            
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        
+        # Style cho button
+        for btn in self.buttons.buttons():
+            btn.setStyleSheet("background: #E2C285; color: #07090F; padding: 6px 12px; border-radius: 4px; font-weight: bold;")
+        
+        layout.addWidget(self.buttons)
+        
+    def get_data(self):
+        return (
+            self.txt_mssv.text().strip(),
+            self.txt_name.text().strip(),
+            self.txt_class.text().strip()
+        )
 
 if __name__ == "__main__":
     from PyQt6.QtWidgets import QApplication
