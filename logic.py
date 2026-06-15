@@ -179,3 +179,23 @@ def recognize_faces_in_frame(frame, threshold=0.38, uncertain_margin=0.08):
             detections.append({"name": "Unknown", "status": "unknown", "box": box})
             
     return detections
+
+def get_all_classes():
+    """Lấy danh sách các lớp học độc nhất từ cơ sở dữ liệu sinh viên"""
+    import sqlite3
+    from config import DATA_DIR
+    db_path = DATA_DIR / "classvision.db"
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT class_name FROM students WHERE class_name != '' ORDER BY class_name")
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+    except Exception as e:
+        print(f"Lỗi đọc class_name từ DB: {e}")
+        return []
+    finally:
+        if conn is not None:
+            conn.close()

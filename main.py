@@ -8,7 +8,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from main_window import build_main_window
 from workers import start_camera, stop_camera
-from logic import recognize_faces_in_frame
+from logic import recognize_faces_in_frame, get_all_classes
 from ui_components import draw_boxes_on_image
 
 class _GuiInvoker(QObject):
@@ -54,7 +54,19 @@ def setup_app_logic(ui: dict):
     rt_ui["btn_start_camera"].clicked.connect(
         lambda *args: start_camera(on_frame_ready, on_camera_error)
     )
-    rt_ui["btn_stop_camera"].clicked.connect(lambda *args: stop_camera())
+    rt_ui["btn_stop_camera"].clicked.connect(stop_camera)
+    
+    # Đổ dữ liệu Lớp học thực tế từ Database vào ComboBox
+    cb_class = rt_ui["cb_class"]
+    cb_class.clear()
+    cb_class.addItem("-- Chọn Lớp --")
+    
+    real_classes = get_all_classes()
+    if real_classes:
+        cb_class.addItems(real_classes)
+    else:
+        # Nếu chưa có lớp nào trong DB thì hiện thông báo
+        cb_class.addItem("(Chưa có dữ liệu lớp)")
 
 def main():
     app = QApplication(sys.argv)
