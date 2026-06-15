@@ -7,7 +7,7 @@ import threading
 
 # Chú ý: import trực tiếp, không dùng 'refactor.' để tránh lỗi khi chạy trực tiếp file này
 from logic import recognize_faces_in_frame
-from config import DEFAULT_CAMERA_INDEX
+from config import DEFAULT_CAMERA_INDEX, TARGET_FPS
 
 # Biến toàn cục để quản lý luồng
 camera_running = False
@@ -56,7 +56,7 @@ def _camera_loop(on_frame_ready, on_error):
         
         # Gửi ngay frame VÀ kết quả AI cũ lên giao diện để mượt mà
         on_frame_ready(frame, latest_ai_results)
-        time.sleep(0.03)  # Giới hạn ~30 FPS
+        time.sleep(1.0 / TARGET_FPS)  # Tính toán độ trễ dựa theo cấu hình FPS
         
     cap.release()
 
