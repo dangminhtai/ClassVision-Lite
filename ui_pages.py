@@ -39,44 +39,21 @@ def build_realtime_page() -> dict:
     # 2. Thẻ hiển thị số liệu (KPI Cards)
     kpi_layout = QHBoxLayout()
     kpi_layout.addWidget(create_kpi_card("TỔNG SỐ", str(DEFAULT_TOTAL_STUDENTS), "#E2C285"))    # Vàng Gold
-    kpi_layout.addWidget(create_kpi_card("CÓ MẶT", "0", "#34D399"))     # Xanh lá
-    kpi_layout.addWidget(create_kpi_card("VẮNG MẶT", str(DEFAULT_TOTAL_STUDENTS), "#FB7185"))   # Đỏ
+    kpi_layout.addWidget(create_kpi_card("ĐÃ ĐIỂM DANH", "0", "#34D399"))     # Xanh lá
+    kpi_layout.addWidget(create_kpi_card("CHƯA ĐIỂM DANH", str(DEFAULT_TOTAL_STUDENTS), "#FB7185"))   # Đỏ
     kpi_layout.addWidget(create_kpi_card("FPS", "0", "#A855F7"))         # Tím
     main_layout.addLayout(kpi_layout)
 
-    # 3. Màn hình Camera và Cài đặt
-    body_layout = QHBoxLayout()
-    
-    # Màn hình Video
+    # 3. Màn hình Camera full width
     video_label = create_video_label()
-    body_layout.addWidget(video_label, stretch=2)
-    
-    # Bảng điều khiển (Sidebar thu nhỏ)
-    control_panel = QWidget()
-    control_layout = QVBoxLayout(control_panel)
-    
-    control_layout.addWidget(QLabel("Chọn Lớp học:"))
-    cb_class = QComboBox()
-    cb_class.addItems(["-- Chọn Lớp --", "20HTTT1", "20HTTT2"])
-    control_layout.addWidget(cb_class)
-    
-    control_layout.addSpacing(20)
-    btn_export = create_button("Xuất File CSV")
-    control_layout.addWidget(btn_export)
-    
-    control_layout.addStretch()
-    body_layout.addWidget(control_panel, stretch=1)
-    
-    main_layout.addLayout(body_layout, stretch=1)
+    main_layout.addWidget(video_label, stretch=1)
 
     # Thay vì gán động lên object (gây lỗi Pylance), ta trả về một Dictionary
     return {
         "page": page,
         "btn_start_camera": btn_start_camera,
         "btn_stop_camera": btn_stop_camera,
-        "btn_export": btn_export,
         "video_label": video_label,
-        "cb_class": cb_class,
         "kpi_cards": kpi_layout
     }
 

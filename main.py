@@ -30,6 +30,22 @@ def invoke_in_gui(func):
 # Cấu trúc: student_id -> {"name": ..., "class": ..., "time": ..., "source": ...}
 global_attendance = {}
 
+def get_student_class_from_db(sid):
+    """Truy vấn nhanh tên lớp của sinh viên từ Database"""
+    import sqlite3
+    from config import DATA_DIR
+    try:
+        conn = sqlite3.connect(DATA_DIR / "classvision.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT class_name FROM students WHERE student_id = ?", (sid,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0]:
+            return row[0]
+    except Exception:
+        pass
+    return "Không rõ"
+
 def setup_app_logic(ui: dict):
     """Gắn kết logic từ workers vào giao diện"""
     rt_ui = ui["realtime_ui"]
@@ -47,7 +63,7 @@ def setup_app_logic(ui: dict):
                 if sid and sid not in global_attendance:
                     global_attendance[sid] = {
                         "name": det.get("name", "Unknown"),
-                        "class": "N/A", # Sẽ fill lại sau nếu cần
+                        "class": get_student_class_from_db(sid),
                         "time": time_str,
                         "source": "Camera"
                     }
@@ -82,18 +98,6 @@ def setup_app_logic(ui: dict):
         lambda *args: start_camera(on_frame_ready, on_camera_error)
     )
     rt_ui["btn_stop_camera"].clicked.connect(stop_camera)
-    
-    # Đổ dữ liệu Lớp học thực tế từ Database vào ComboBox
-    cb_class = rt_ui["cb_class"]
-    cb_class.clear()
-    cb_class.addItem("-- Chọn Lớp --")
-    
-    real_classes = get_all_classes()
-    if real_classes:
-        cb_class.addItems(real_classes)
-    else:
-        # Nếu chưa có lớp nào trong DB thì hiện thông báo
-        cb_class.addItem("(Chưa có dữ liệu lớp)")
 
 def setup_student_manage_logic(ui):
     from PyQt6.QtWidgets import QTableWidgetItem, QMessageBox
@@ -246,7 +250,7 @@ def setup_image_attendance_logic(ui):
             if sid and sid not in global_attendance:
                 global_attendance[sid] = {
                     "name": sname,
-                    "class": "N/A",
+                    "class": get_student_class_from_db(sid),
                     "time": time_str,
                     "source": "Ảnh tĩnh"
                 }
@@ -255,7 +259,7 @@ def setup_image_attendance_logic(ui):
             table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1))) # STT
             table.setItem(row_idx, 1, QTableWidgetItem(sid)) # MSSV
             table.setItem(row_idx, 2, QTableWidgetItem(sname)) # Name
-            table.setItem(row_idx, 3, QTableWidgetItem("N/A")) # Lớp (tạm ẩn)
+            table.setItem(row_idx, 3, QTableWidgetItem(get_student_class_from_db(sid))) # Lớp
             
             # Cột trạng thái
             status_text = "Có mặt" if student.get("status") == "present" else "Cần xem xét"
