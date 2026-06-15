@@ -69,11 +69,6 @@ def build_realtime_page() -> dict:
     
     main_layout.addLayout(body_layout, stretch=1)
 
-    # 4. Bảng danh sách điểm danh
-    main_layout.addWidget(QLabel("DANH SÁCH SINH VIÊN:"))
-    table = create_attendance_table()
-    main_layout.addWidget(table, stretch=1)
-
     # Thay vì gán động lên object (gây lỗi Pylance), ta trả về một Dictionary
     return {
         "page": page,
@@ -81,7 +76,6 @@ def build_realtime_page() -> dict:
         "btn_stop_camera": btn_stop_camera,
         "btn_export": btn_export,
         "video_label": video_label,
-        "table": table,
         "cb_class": cb_class,
         "kpi_cards": kpi_layout
     }
@@ -193,6 +187,62 @@ class StudentDialog(QDialog):
             self.txt_name.text().strip(),
             self.txt_class.text().strip()
         )
+
+def build_image_attendance_page() -> dict:
+    """Xây dựng trang Điểm danh bằng Ảnh tĩnh"""
+    page = QWidget()
+    main_layout = QVBoxLayout(page)
+    
+    # 1. Tiêu đề và nút Tải ảnh
+    header_layout = QHBoxLayout()
+    title = QLabel("ĐIỂM DANH BẰNG ẢNH")
+    title.setObjectName("Title")
+    header_layout.addWidget(title)
+    
+    header_layout.addStretch()
+    
+    btn_upload = create_button("Chọn ảnh tải lên...")
+    btn_upload.setStyleSheet("background: #A855F7; color: #07090F; font-weight: bold; padding: 10px 20px; border-radius: 8px;")
+    header_layout.addWidget(btn_upload)
+    
+    main_layout.addLayout(header_layout)
+    
+    # 2. Bảng kết quả tổng quan (KPIs cho Ảnh)
+    kpi_layout = QHBoxLayout()
+    kpi_layout.addWidget(create_kpi_card("TỔNG SỐ", str(DEFAULT_TOTAL_STUDENTS), "#E2C285"))    # Vàng Gold
+    kpi_layout.addWidget(create_kpi_card("CÓ MẶT (ẢNH)", "0", "#34D399"))     # Xanh lá
+    kpi_layout.addWidget(create_kpi_card("VẮNG MẶT", str(DEFAULT_TOTAL_STUDENTS), "#FB7185"))   # Đỏ
+    kpi_layout.addWidget(create_kpi_card("UNKNOWN", "0", "#A855F7"))         # Tím
+    main_layout.addLayout(kpi_layout)
+    
+    # 3. Màn hình Ảnh và Danh sách
+    body_layout = QHBoxLayout()
+    
+    # Khung hiển thị ảnh gốc sau khi vẽ boxes
+    image_label = create_video_label()
+    image_label.setText("Chưa có ảnh nào được chọn.")
+    body_layout.addWidget(image_label, stretch=2)
+    
+    # Bảng kết quả bên phải
+    right_panel = QWidget()
+    right_layout = QVBoxLayout(right_panel)
+    right_layout.setContentsMargins(0, 0, 0, 0)
+    
+    right_layout.addWidget(QLabel("DANH SÁCH NHẬN DIỆN:"))
+    table = create_attendance_table()
+    right_layout.addWidget(table)
+    
+    body_layout.addWidget(right_panel, stretch=1)
+    
+    main_layout.addLayout(body_layout, stretch=1)
+    
+    return {
+        "page": page,
+        "btn_upload": btn_upload,
+        "image_label": image_label,
+        "table": table,
+        "kpi_cards": kpi_layout
+    }
 
 if __name__ == "__main__":
     from PyQt6.QtWidgets import QApplication

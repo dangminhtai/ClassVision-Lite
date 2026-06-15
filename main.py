@@ -160,6 +160,86 @@ def setup_student_manage_logic(ui):
     # Tải dữ liệu lần đầu
     load_data()
 
+def setup_image_attendance_logic(ui):
+    from PyQt6.QtWidgets import QFileDialog, QTableWidgetItem, QMessageBox
+    from PyQt6.QtGui import QPixmap
+    import cv2
+    from logic import recognize_faces_in_frame
+    from ui_components import draw_boxes_on_image
+    from config import DEFAULT_TOTAL_STUDENTS
+    import datetime
+    
+    img_ui = ui["image_ui"]
+    
+    def on_upload_image():
+        file_path, _ = QFileDialog.getOpenFileName(
+            ui["window"], "Chọn ảnh điểm danh", "", "Images (*.png *.jpg *.jpeg *.bmp)"
+        )
+        if not file_path:
+            return
+            
+        img_ui["btn_upload"].setText("Đang xử lý AI...")
+        # Ép UI cập nhật ngay lập tức
+        from PyQt6.QtWidgets import QApplication
+        QApplication.processEvents()
+        
+        # Đọc ảnh
+        frame = cv2.imread(file_path)
+        if frame is None:
+            QMessageBox.warning(ui["window"], "Lỗi", "Không thể đọc file ảnh!")
+            img_ui["btn_upload"].setText("Chọn ảnh tải lên...")
+            return
+            
+        # Resize ảnh nếu quá lớn để không bị lag giao diện
+        h, w = frame.shape[:2]
+        if w > 1920:
+            scale = 1920 / w
+            frame = cv2.resize(frame, (1920, int(h * scale)))
+            
+        # Gọi AI (chạy thẳng luôn vì đây là ảnh tĩnh, không cần luồng ngầm)
+        results = recognize_faces_in_frame(frame)
+        
+        # Vẽ boxes
+        qimg = draw_boxes_on_image(frame, results)
+        img_ui["image_label"].setPixmap(QPixmap.fromImage(qimg))
+        
+        # Cập nhật KPIs
+        present_count = sum(1 for d in results if d.get("status") in ("present", "uncertain"))
+        unknown_count = sum(1 for d in results if d.get("status") == "unknown")
+        absent_count = max(0, DEFAULT_TOTAL_STUDENTS - present_count)
+        
+        img_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(present_count))
+        img_ui["kpi_cards"].itemAt(2).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(absent_count))
+        img_ui["kpi_cards"].itemAt(3).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(unknown_count))
+        
+        # Điền bảng
+        table = img_ui["table"]
+        table.setRowCount(0)
+        time_str = datetime.datetime.now().strftime("%H:%M:%S")
+        
+        # Chỉ lấy những người có mặt
+        detected_students = [d for d in results if d.get("status") != "unknown"]
+        for row_idx, student in enumerate(detected_students):
+            table.insertRow(row_idx)
+            table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1))) # STT
+            table.setItem(row_idx, 1, QTableWidgetItem(student.get("student_id", ""))) # MSSV
+            table.setItem(row_idx, 2, QTableWidgetItem(student.get("name", ""))) # Name
+            table.setItem(row_idx, 3, QTableWidgetItem("N/A")) # Lớp (tạm ẩn)
+            
+            # Cột trạng thái
+            status_text = "Có mặt" if student.get("status") == "present" else "Cần xem xét"
+            item_status = QTableWidgetItem(status_text)
+            from PyQt6.QtGui import QColor
+            color = "#34D399" if student.get("status") == "present" else "#FBBF24"
+            item_status.setForeground(QColor(color))
+            table.setItem(row_idx, 4, item_status)
+            
+            table.setItem(row_idx, 5, QTableWidgetItem(time_str)) # Time
+            
+        img_ui["btn_upload"].setText("Chọn ảnh tải lên...")
+        
+    img_ui["btn_upload"].clicked.connect(on_upload_image)
+
 def main():
     app = QApplication(sys.argv)
     
@@ -169,6 +249,7 @@ def main():
     # 2. Gắn kết logic (Nút bấm -> Camera -> AI -> Vẽ hình)
     setup_app_logic(ui)
     setup_student_manage_logic(ui)
+    setup_image_attendance_logic(ui)
     
     # 3. Hiển thị
     ui["window"].showMaximized()

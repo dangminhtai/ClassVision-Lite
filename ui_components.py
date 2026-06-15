@@ -105,12 +105,31 @@ def add_row_to_table(table: QTableWidget, student_id: str, name: str, class_name
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         table.setItem(row, col, item)
 
+class ScalableImageLabel(QLabel):
+    def __init__(self, text=""):
+        super().__init__(text)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet("background: #000; border: 1px solid #E2C285; border-radius: 12px; font-size: 16px;")
+        self.setMinimumSize(400, 300)
+        self._pixmap = None
+
+    def setPixmap(self, a0):
+        self._pixmap = a0
+        self._update_pixmap()
+
+    def resizeEvent(self, a0):
+        if self._pixmap:
+            self._update_pixmap()
+        super().resizeEvent(a0)
+
+    def _update_pixmap(self):
+        if self._pixmap and not self._pixmap.isNull():
+            scaled = self._pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            super().setPixmap(scaled)
+
 def create_video_label() -> QLabel:
-    """Tạo màn hình hiển thị Camera (Dùng QLabel cực kỳ đơn giản)"""
-    lbl = QLabel("Đang chờ Camera...")
-    lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    lbl.setStyleSheet("background: #000; border: 1px solid #E2C285; border-radius: 12px; font-size: 16px;")
-    lbl.setMinimumSize(640, 480)
+    """Tạo màn hình hiển thị Camera tự động co giãn vừa khung hình"""
+    lbl = ScalableImageLabel("Đang chờ Camera...")
     return lbl
 
 def draw_boxes_on_image(cv_image, detections: list) -> QImage:
@@ -131,9 +150,14 @@ def draw_boxes_on_image(cv_image, detections: list) -> QImage:
         
         # Vẽ khung
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-        # Vẽ tên
+        # Khắc phục lỗi font OpenCV không hỗ trợ tiếng Việt
         name = det.get("name", "Unknown")
-        cv2.putText(img, name, (x1, max(20, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        import unicodedata
+        name_no_accents = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
+        name_no_accents = name_no_accents.replace('đ', 'd').replace('Đ', 'D')
+        
+        # Vẽ tên
+        cv2.putText(img, name_no_accents, (x1, max(20, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
     # Convert sang QPixmap
     rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

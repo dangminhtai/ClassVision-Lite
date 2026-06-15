@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from ui_components import APP_STYLE, create_button
-from ui_pages import build_realtime_page, build_student_manage_page
+from ui_pages import build_realtime_page, build_student_manage_page, build_image_attendance_page
 
 def build_main_window() -> dict:
     """Khởi tạo Cửa sổ chính chứa Sidebar và các trang"""
@@ -39,8 +39,10 @@ def build_main_window() -> dict:
     sidebar_layout.addSpacing(30)
     
     btn_nav_camera = create_button("Điểm danh Camera")
+    btn_nav_image = create_button("Điểm danh Ảnh tĩnh")
     btn_nav_student = create_button("Quản lý Sinh viên")
     sidebar_layout.addWidget(btn_nav_camera)
+    sidebar_layout.addWidget(btn_nav_image)
     sidebar_layout.addWidget(btn_nav_student)
     sidebar_layout.addStretch()
     
@@ -51,21 +53,25 @@ def build_main_window() -> dict:
     
     # Khởi tạo các trang từ ui_pages.py (kết quả trả về là dict)
     realtime_ui = build_realtime_page()
+    image_ui = build_image_attendance_page()
     student_ui = build_student_manage_page()
     
-    stack.addWidget(realtime_ui["page"])
-    stack.addWidget(student_ui["page"])
+    stack.addWidget(realtime_ui["page"])      # index 0
+    stack.addWidget(image_ui["page"])         # index 1
+    stack.addWidget(student_ui["page"])       # index 2
     
     main_layout.addWidget(stack)
     
     # 3. Logic chuyển trang cơ bản
     btn_nav_camera.clicked.connect(lambda: stack.setCurrentIndex(0))
-    btn_nav_student.clicked.connect(lambda: stack.setCurrentIndex(1))
+    btn_nav_image.clicked.connect(lambda: stack.setCurrentIndex(1))
+    btn_nav_student.clicked.connect(lambda: stack.setCurrentIndex(2))
     
     return {
         "window": window,
         "stack": stack,
         "realtime_ui": realtime_ui,
+        "image_ui": image_ui,
         "student_ui": student_ui
     }
 
