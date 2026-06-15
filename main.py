@@ -29,16 +29,19 @@ def setup_app_logic(ui: dict):
     """Gắn kết logic từ workers vào giao diện"""
     rt_ui = ui["realtime_ui"]
     
-    def on_frame_ready(frame, ai_results):
-        # Frame mới được đẩy liên tục từ camera (~30 FPS)
-        # Kết quả AI (ai_results) sẽ được luồng AI chạy ngầm cập nhật liên tục (3-5 FPS)
+    def on_frame_ready(frame, ai_results, fps):
+        # 1. Vẽ khung OpenCV lên ảnh NGAY TẠI LUỒNG NGẦM (Nhanh, không làm đơ GUI)
+        qimg = draw_boxes_on_image(frame, ai_results)
         
-        # Đẩy hình lên GUI ngay lập tức để không bị lag
+        # 2. Chỉ đẩy tấm hình đã vẽ xong lên giao diện ở luồng chính
         def update_ui():
-            pixmap = draw_boxes_on_image(frame, ai_results)
-            rt_ui["video_label"].setPixmap(pixmap)
+            from PyQt6.QtGui import QPixmap
+            rt_ui["video_label"].setPixmap(QPixmap.fromImage(qimg))
+            
             # Cập nhật KPI Có Mặt
             rt_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(len(ai_results)))
+            # Cập nhật KPI FPS (Thẻ thứ 5, index 4)
+            rt_ui["kpi_cards"].itemAt(4).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(fps))
         
         invoke_in_gui(update_ui)
 

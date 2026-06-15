@@ -111,10 +111,10 @@ def create_video_label() -> QLabel:
     lbl.setMinimumSize(640, 480)
     return lbl
 
-def draw_boxes_on_image(cv_image, detections: list) -> QPixmap:
+def draw_boxes_on_image(cv_image, detections: list) -> QImage:
     """
-    Vẽ khung nhận diện khuôn mặt lên ảnh bằng OpenCV thuần túy, 
-    sau đó convert sang QPixmap để gắn vào QLabel.
+    Vẽ khung nhận diện khuôn mặt lên ảnh bằng OpenCV thuần túy.
+    Trả về QImage để có thể chạy an toàn ở luồng ngầm (Background thread).
     """
     img = cv_image.copy()
     height, width, _ = img.shape
@@ -140,7 +140,7 @@ def draw_boxes_on_image(cv_image, detections: list) -> QPixmap:
     # Nếu hàm kết thúc, rgb_image bị xóa -> QImage hiển thị màn hình đen hoặc crash.
     # Giải pháp: .copy() để ép QImage giữ dữ liệu riêng.
     qimg = QImage(rgb_image.data, w, h, ch * w, QImage.Format.Format_RGB888).copy()
-    return QPixmap.fromImage(qimg)
+    return qimg
 
 if __name__ == "__main__":
     print("Test file ui_components.py: OK!")

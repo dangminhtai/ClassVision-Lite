@@ -7,7 +7,7 @@ import threading
 
 # Chú ý: import trực tiếp, không dùng 'refactor.' để tránh lỗi khi chạy trực tiếp file này
 from logic import recognize_faces_in_frame
-from config import DEFAULT_CAMERA_INDEX, TARGET_FPS
+from config import DEFAULT_CAMERA_INDEX, TARGET_FPS, LIVE_RECOGNITION_INTERVAL_MS
 
 # Biến toàn cục để quản lý luồng
 camera_running = False
@@ -24,6 +24,9 @@ def _ai_loop():
             # Bước này tốn khoảng 100-300ms
             results = recognize_faces_in_frame(frame_to_process)
             latest_ai_results = results
+            
+            # QUAN TRỌNG: Ngủ một chút để nhả CPU và GIL cho luồng Camera chạy
+            time.sleep(LIVE_RECOGNITION_INTERVAL_MS / 1000.0)
         else:
             time.sleep(0.01)
 
@@ -45,18 +48,27 @@ def _camera_loop(on_frame_ready, on_error):
         camera_running = False
         return
 
+    fps_val = 0.0
+    prev_time = time.time()
+    
     while camera_running:
         ret, frame = cap.read()
         if not ret:
             on_error("Lỗi: Mất kết nối Camera!")
             break
             
+        # Tính FPS
+        curr_time = time.time()
+        diff = curr_time - prev_time
+        if diff > 0:
+            fps_val = fps_val * 0.9 + (1.0 / diff) * 0.1
+        prev_time = curr_time
+        
         # Cập nhật khung hình mới nhất cho luồng AI lấy đi phân tích
         latest_frame = frame
         
-        # Gửi ngay frame VÀ kết quả AI cũ lên giao diện để mượt mà
-        on_frame_ready(frame, latest_ai_results)
-        time.sleep(1.0 / TARGET_FPS)  # Tính toán độ trễ dựa theo cấu hình FPS
+        # Gửi ngay frame, kết quả AI cũ VÀ FPS lên giao diện để mượt mà
+        on_frame_ready(frame, latest_ai_results, int(fps_val))
         
     cap.release()
 

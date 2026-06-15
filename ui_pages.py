@@ -41,6 +41,7 @@ def build_realtime_page() -> dict:
     kpi_layout.addWidget(create_kpi_card("CÓ MẶT", "0", "#34D399"))     # Xanh lá
     kpi_layout.addWidget(create_kpi_card("VẮNG MẶT", "0", "#FB7185"))   # Đỏ
     kpi_layout.addWidget(create_kpi_card("ĐI TRỄ", "0", "#FBBF24"))      # Cam
+    kpi_layout.addWidget(create_kpi_card("FPS", "0", "#A855F7"))         # Tím
     main_layout.addLayout(kpi_layout)
 
     # 3. Màn hình Camera và Cài đặt
