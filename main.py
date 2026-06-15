@@ -29,17 +29,16 @@ def setup_app_logic(ui: dict):
     """Gắn kết logic từ workers vào giao diện"""
     rt_ui = ui["realtime_ui"]
     
-    def on_frame_ready(frame):
-        # Frame mới từ Camera (đang ở luồng ngầm của camera)
-        # 1. Chạy AI NGAY TẠI ĐÂY (đồng bộ) để không đẻ thêm thread rác
-        result = recognize_faces_in_frame(frame)
+    def on_frame_ready(frame, ai_results):
+        # Frame mới được đẩy liên tục từ camera (~30 FPS)
+        # Kết quả AI (ai_results) sẽ được luồng AI chạy ngầm cập nhật liên tục (3-5 FPS)
         
-        # 2. Đẩy hình lên GUI
+        # Đẩy hình lên GUI ngay lập tức để không bị lag
         def update_ui():
-            pixmap = draw_boxes_on_image(frame, result)
+            pixmap = draw_boxes_on_image(frame, ai_results)
             rt_ui["video_label"].setPixmap(pixmap)
             # Cập nhật KPI Có Mặt
-            rt_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(len(result)))
+            rt_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(len(ai_results)))
         
         invoke_in_gui(update_ui)
 
