@@ -93,10 +93,44 @@ def setup_app_logic(ui: dict):
             rt_ui["video_label"].setText(err_msg)
         invoke_in_gui(update_err)
 
-    # Gắn sự kiện cho nút bấm (thêm *args để tránh lỗi tham số checked của PyQt)
-    rt_ui["btn_start_camera"].clicked.connect(
-        lambda *args: start_camera(on_frame_ready, on_camera_error)
-    )
+    # Gắn sự kiện cho nút bấm
+    def on_start_camera():
+        rt_ui["video_label"].setText("Đang khởi động Camera cục bộ...")
+        start_camera(on_frame_ready, on_camera_error, camera_source=0, is_ip_camera=False)
+        
+    rt_ui["btn_start_camera"].clicked.connect(on_start_camera)
+    
+    def on_ip_camera():
+        from PyQt6.QtWidgets import QInputDialog, QLineEdit, QMessageBox
+        import socket
+        import urllib.parse
+        
+        ip_url, ok = QInputDialog.getText(ui["window"], "Kết nối IP-Webcam", "Nhập luồng Video IP (VD: http://192.168.1.5:8080/video):", QLineEdit.EchoMode.Normal, "http://")
+        if ok and ip_url.strip():
+            final_url = ip_url.strip()
+            if not final_url.startswith("http"):
+                final_url = "http://" + final_url
+                
+            parsed = urllib.parse.urlparse(final_url)
+            host = parsed.hostname
+            port = parsed.port or 80
+            
+            # Thường ứng dụng IP Webcam bắt buộc phải có /video ở cuối mới lấy được luồng hình ảnh
+            if not parsed.path or parsed.path == "/":
+                final_url = final_url.rstrip("/") + "/video"
+                
+            # Kiểm tra nhanh kết nối trước khi khởi động OpenCV (tránh treo app 60 giây)
+            try:
+                socket.create_connection((host, port), timeout=2.0)
+            except Exception:
+                QMessageBox.warning(ui["window"], "Lỗi Kết Nối Mạng", f"Không thể với tới địa chỉ: {host}:{port}\n\nNguyên nhân thường gặp:\n1. Điện thoại và Máy tính KHÁC mạng Wi-Fi (Hãy tắt 4G trên điện thoại).\n2. Bạn chưa bấm 'Start server' trên điện thoại.\n3. Bạn gõ sai địa chỉ IP.")
+                rt_ui["video_label"].setText("Lỗi mạng: Không tìm thấy IP Webcam.")
+                return
+                
+            rt_ui["video_label"].setText(f"Đang kết nối luồng IP: {final_url} ... Vui lòng chờ!")
+            start_camera(on_frame_ready, on_camera_error, camera_source=final_url, is_ip_camera=True)
+            
+    rt_ui["btn_ip_camera"].clicked.connect(on_ip_camera)
     rt_ui["btn_stop_camera"].clicked.connect(stop_camera)
 
 def setup_student_manage_logic(ui):

@@ -30,7 +30,7 @@ def _ai_loop():
         else:
             time.sleep(0.01)
 
-def _camera_loop(on_frame_ready, on_error):
+def _camera_loop(on_frame_ready, on_error, camera_source, is_ip_camera):
     """Hàm chạy vòng lặp đọc camera liên tục ở 30 FPS"""
     global camera_running, latest_frame, latest_ai_results
     camera_running = True
@@ -41,8 +41,7 @@ def _camera_loop(on_frame_ready, on_error):
     ai_thread = threading.Thread(target=_ai_loop, daemon=True)
     ai_thread.start()
     
-    # Bỏ CAP_DSHOW để Windows dùng MSMF (thường tự chọn độ phân giải HD cao hơn)
-    cap = cv2.VideoCapture(DEFAULT_CAMERA_INDEX)
+    cap = cv2.VideoCapture(camera_source)
     if not cap.isOpened():
         on_error("Lỗi: Không thể kết nối với Camera!")
         camera_running = False
@@ -56,6 +55,13 @@ def _camera_loop(on_frame_ready, on_error):
         if not ret:
             on_error("Lỗi: Mất kết nối Camera!")
             break
+            
+        # NẾU là Camera gắn ngoài/Laptop thì lật ảnh như gương
+        # NẾU là IP Webcam thì xoay ngược 90 độ (trái) để khắc phục lỗi xoay phải
+        if not is_ip_camera:
+            frame = cv2.flip(frame, 1)
+        else:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
             
         # Tính FPS
         curr_time = time.time()
@@ -72,13 +78,13 @@ def _camera_loop(on_frame_ready, on_error):
         
     cap.release()
 
-def start_camera(on_frame_ready, on_error):
+def start_camera(on_frame_ready, on_error, camera_source=DEFAULT_CAMERA_INDEX, is_ip_camera=False):
     """Bật camera trong một luồng (thread) chạy ngầm"""
     global camera_running
     if camera_running:
         return # Nếu đang chạy rồi thì bỏ qua
     
-    t = threading.Thread(target=_camera_loop, args=(on_frame_ready, on_error), daemon=True)
+    t = threading.Thread(target=_camera_loop, args=(on_frame_ready, on_error, camera_source, is_ip_camera), daemon=True)
     t.start()
 
 def stop_camera():

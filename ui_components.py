@@ -17,7 +17,8 @@ DESIGN_TOKENS = {
 
 APP_STYLE = """
 * { font-family: "Segoe UI", sans-serif; font-size: 14px; color: @ink; }
-QMainWindow, QWidget#AppRoot { background: @bg; }
+QMainWindow, QWidget#AppRoot, QDialog { background: @bg; }
+QLineEdit { background: @bg2; color: @ink; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 6px; }
 QFrame#Sidebar { background: @bg2; border-right: 1px solid rgba(255,255,255,0.08); }
 QFrame#Panel { background: @panel; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
 QLabel#Title { font-size: 24px; font-weight: bold; color: @gold; }

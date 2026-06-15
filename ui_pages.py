@@ -30,8 +30,10 @@ def build_realtime_page() -> dict:
     
     # Nút bật/tắt camera
     btn_start_camera = create_button("Bật Camera")
+    btn_ip_camera = create_button("Kết nối IP-Webcam")
     btn_stop_camera = create_button("Tắt Camera")
     header_layout.addWidget(btn_start_camera)
+    header_layout.addWidget(btn_ip_camera)
     header_layout.addWidget(btn_stop_camera)
     
     main_layout.addLayout(header_layout)
@@ -52,6 +54,7 @@ def build_realtime_page() -> dict:
     return {
         "page": page,
         "btn_start_camera": btn_start_camera,
+        "btn_ip_camera": btn_ip_camera,
         "btn_stop_camera": btn_stop_camera,
         "video_label": video_label,
         "kpi_cards": kpi_layout
