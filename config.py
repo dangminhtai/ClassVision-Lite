@@ -11,7 +11,7 @@ TARGET_FPS = 30 # Tốc độ khung hình mục tiêu của Camera
 DEFAULT_TOTAL_STUDENTS = 41 # Sĩ số sinh viên mặc định
 
 # Cấu hình AI & Nhận diện
-LIVE_RECOGNITION_INTERVAL_MS = 700
+LIVE_RECOGNITION_INTERVAL_MS = 150
 MIN_STABLE_FRAMES = 5
 INSIGHTFACE_MODEL = "buffalo_s"
 INSIGHTFACE_DET_SIZE = (640, 640)

@@ -41,8 +41,8 @@ def _camera_loop(on_frame_ready, on_error):
     ai_thread = threading.Thread(target=_ai_loop, daemon=True)
     ai_thread.start()
     
-    # Thêm cv2.CAP_DSHOW để tránh lỗi MSMF (-1072873821) trên Windows
-    cap = cv2.VideoCapture(DEFAULT_CAMERA_INDEX, cv2.CAP_DSHOW)
+    # Bỏ CAP_DSHOW để Windows dùng MSMF (thường tự chọn độ phân giải HD cao hơn)
+    cap = cv2.VideoCapture(DEFAULT_CAMERA_INDEX)
     if not cap.isOpened():
         on_error("Lỗi: Không thể kết nối với Camera!")
         camera_running = False

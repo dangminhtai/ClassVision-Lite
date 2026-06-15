@@ -58,7 +58,7 @@ def setup_app_logic(ui: dict):
         # Gọi get_students mỗi lần thì hơi chậm, nhưng sqlite khá nhanh. Tối ưu hơn: cache lại.
         # Ở đây ta cứ lưu tên do AI trả về trước, Lớp học có thể cập nhật sau.
         for det in ai_results:
-            if det.get("status") in ("present", "uncertain"):
+            if det.get("status") == "present":
                 sid = det.get("student_id")
                 if sid and sid not in global_attendance:
                     global_attendance[sid] = {

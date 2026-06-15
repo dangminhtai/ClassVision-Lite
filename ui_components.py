@@ -145,9 +145,14 @@ def draw_boxes_on_image(cv_image, detections: list) -> QImage:
         x, y, w, h = det.get("box", (0, 0, 0, 0))
         x1, y1 = int(x * width), int(y * height)
         x2, y2 = int((x + w) * width), int((y + h) * height)
-        
-        color = (153, 211, 52) if det.get("status") == "present" else (133, 113, 251) # BGR
-        
+        status = det.get("status")
+        if status == "present":
+            color = (153, 211, 52) # Xanh lá (BGR)
+        elif status == "uncertain":
+            color = (0, 165, 255) # Cam (BGR)
+        else:
+            color = (133, 113, 251) # Đỏ (BGR)
+            
         # Vẽ khung
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
         # Khắc phục lỗi font OpenCV không hỗ trợ tiếng Việt
