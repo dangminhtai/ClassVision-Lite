@@ -66,7 +66,7 @@ def create_kpi_card(title: str, value: str, accent_color: str) -> QFrame:
 
 def create_attendance_table() -> QTableWidget:
     """Tạo bảng danh sách sinh viên điểm danh"""
-    cols = ["STT", "MSSV", "Họ tên", "Lớp", "Trạng thái", "Thời gian"]
+    cols = ["STT", "MSSV", "Họ tên", "Lớp", "Trạng thái", "Nguồn", "Thời gian"]
     table = QTableWidget(0, len(cols))
     table.setHorizontalHeaderLabels(cols)
     

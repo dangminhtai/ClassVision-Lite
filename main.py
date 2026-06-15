@@ -26,11 +26,32 @@ def invoke_in_gui(func):
     except RuntimeError:
         pass # Bỏ qua nếu app đã tắt và _invoker bị hủy
 
+# Biến toàn cục để lưu báo cáo điểm danh (In-memory Lite)
+# Cấu trúc: student_id -> {"name": ..., "class": ..., "time": ..., "source": ...}
+global_attendance = {}
+
 def setup_app_logic(ui: dict):
     """Gắn kết logic từ workers vào giao diện"""
     rt_ui = ui["realtime_ui"]
     
     def on_frame_ready(frame, ai_results, fps):
+        # Lưu vào danh sách điểm danh
+        from logic import get_students
+        import datetime
+        time_str = datetime.datetime.now().strftime("%H:%M:%S")
+        # Gọi get_students mỗi lần thì hơi chậm, nhưng sqlite khá nhanh. Tối ưu hơn: cache lại.
+        # Ở đây ta cứ lưu tên do AI trả về trước, Lớp học có thể cập nhật sau.
+        for det in ai_results:
+            if det.get("status") in ("present", "uncertain"):
+                sid = det.get("student_id")
+                if sid and sid not in global_attendance:
+                    global_attendance[sid] = {
+                        "name": det.get("name", "Unknown"),
+                        "class": "N/A", # Sẽ fill lại sau nếu cần
+                        "time": time_str,
+                        "source": "Camera"
+                    }
+                    
         # 1. Vẽ khung OpenCV lên ảnh NGAY TẠI LUỒNG NGẦM (Nhanh, không làm đơ GUI)
         qimg = draw_boxes_on_image(frame, ai_results)
         
@@ -38,8 +59,8 @@ def setup_app_logic(ui: dict):
         def update_ui():
             from PyQt6.QtGui import QPixmap
             rt_ui["video_label"].setPixmap(QPixmap.fromImage(qimg))
-            # Đếm số người có mặt (loại bỏ Unknown)
-            present_count = sum(1 for d in ai_results if d.get("status") != "unknown")
+            # Đếm số người có mặt dựa trên danh sách cộng dồn (tránh việc quay mặt đi là bị trừ số)
+            present_count = len(global_attendance)
             absent_count = max(0, DEFAULT_TOTAL_STUDENTS - present_count)
             
             # Cập nhật KPI Có Mặt (Thẻ thứ 2, index 1)
@@ -220,10 +241,20 @@ def setup_image_attendance_logic(ui):
         # Chỉ lấy những người có mặt
         detected_students = [d for d in results if d.get("status") != "unknown"]
         for row_idx, student in enumerate(detected_students):
+            sid = student.get("student_id", "")
+            sname = student.get("name", "")
+            if sid and sid not in global_attendance:
+                global_attendance[sid] = {
+                    "name": sname,
+                    "class": "N/A",
+                    "time": time_str,
+                    "source": "Ảnh tĩnh"
+                }
+                
             table.insertRow(row_idx)
             table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1))) # STT
-            table.setItem(row_idx, 1, QTableWidgetItem(student.get("student_id", ""))) # MSSV
-            table.setItem(row_idx, 2, QTableWidgetItem(student.get("name", ""))) # Name
+            table.setItem(row_idx, 1, QTableWidgetItem(sid)) # MSSV
+            table.setItem(row_idx, 2, QTableWidgetItem(sname)) # Name
             table.setItem(row_idx, 3, QTableWidgetItem("N/A")) # Lớp (tạm ẩn)
             
             # Cột trạng thái
@@ -234,11 +265,73 @@ def setup_image_attendance_logic(ui):
             item_status.setForeground(QColor(color))
             table.setItem(row_idx, 4, item_status)
             
-            table.setItem(row_idx, 5, QTableWidgetItem(time_str)) # Time
+            # Nguồn
+            item_source = QTableWidgetItem("Ảnh tĩnh")
+            item_source.setForeground(QColor("#A855F7"))
+            table.setItem(row_idx, 5, item_source)
+            
+            table.setItem(row_idx, 6, QTableWidgetItem(time_str)) # Time
             
         img_ui["btn_upload"].setText("Chọn ảnh tải lên...")
         
     img_ui["btn_upload"].clicked.connect(on_upload_image)
+
+def setup_report_logic(ui: dict):
+    """Gắn kết logic cho trang Báo cáo Điểm danh"""
+    from PyQt6.QtWidgets import QTableWidgetItem, QFileDialog, QMessageBox
+    from PyQt6.QtGui import QColor
+    import csv
+    
+    report_ui = ui["report_ui"]
+    table = report_ui["table"]
+    
+    def refresh_report():
+        table.setRowCount(0)
+        # Điền dữ liệu từ bộ nhớ đệm
+        for row_idx, (sid, data) in enumerate(global_attendance.items()):
+            table.insertRow(row_idx)
+            table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1)))
+            table.setItem(row_idx, 1, QTableWidgetItem(sid))
+            table.setItem(row_idx, 2, QTableWidgetItem(data["name"]))
+            table.setItem(row_idx, 3, QTableWidgetItem(data["class"]))
+            
+            # Trạng thái mặc định Có mặt vì đã vào danh sách này
+            item_status = QTableWidgetItem("Có mặt")
+            item_status.setForeground(QColor("#34D399"))
+            table.setItem(row_idx, 4, item_status)
+            
+            # Nguồn
+            source = data["source"]
+            item_source = QTableWidgetItem(source)
+            color = "#A855F7" if source == "Ảnh tĩnh" else "#38BDF8"
+            item_source.setForeground(QColor(color))
+            table.setItem(row_idx, 5, item_source)
+            
+            table.setItem(row_idx, 6, QTableWidgetItem(data["time"]))
+            
+    def export_csv():
+        if not global_attendance:
+            QMessageBox.warning(None, "Trống", "Không có dữ liệu điểm danh nào để xuất!")
+            return
+            
+        path, _ = QFileDialog.getSaveFileName(None, "Lưu Báo cáo CSV", "bao_cao_diem_danh.csv", "CSV Files (*.csv)")
+        if not path:
+            return
+        
+        try:
+            with open(path, mode='w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                writer.writerow(["STT", "MSSV", "Họ tên", "Lớp", "Trạng thái", "Nguồn", "Thời gian"])
+                for row_idx, (sid, data) in enumerate(global_attendance.items()):
+                    writer.writerow([
+                        row_idx + 1, sid, data["name"], data["class"], "Có mặt", data["source"], data["time"]
+                    ])
+            QMessageBox.information(None, "Thành công", f"Đã lưu báo cáo tại:\n{path}")
+        except Exception as e:
+            QMessageBox.warning(None, "Lỗi", f"Lỗi khi lưu file: {str(e)}")
+
+    report_ui["btn_refresh"].clicked.connect(refresh_report)
+    report_ui["btn_export"].clicked.connect(export_csv)
 
 def main():
     app = QApplication(sys.argv)
@@ -250,6 +343,7 @@ def main():
     setup_app_logic(ui)
     setup_student_manage_logic(ui)
     setup_image_attendance_logic(ui)
+    setup_report_logic(ui)
     
     # 3. Hiển thị
     ui["window"].showMaximized()

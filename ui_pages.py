@@ -124,7 +124,8 @@ def build_student_manage_page() -> dict:
     header = table.horizontalHeader()
     if header is not None:
         table.setColumnHidden(4, True) # Trạng thái
-        table.setColumnHidden(5, True) # Thời gian
+        table.setColumnHidden(5, True) # Nguồn
+        table.setColumnHidden(6, True) # Thời gian
     layout.addWidget(table)
     
     # Nút làm mới
@@ -242,6 +243,41 @@ def build_image_attendance_page() -> dict:
         "image_label": image_label,
         "table": table,
         "kpi_cards": kpi_layout
+    }
+
+def build_report_page() -> dict:
+    """Xây dựng trang Báo cáo Điểm danh tổng hợp"""
+    page = QWidget()
+    layout = QVBoxLayout(page)
+    
+    title = QLabel("BÁO CÁO ĐIỂM DANH")
+    title.setObjectName("Title")
+    layout.addWidget(title)
+    
+    # -- Thanh công cụ (Toolbar) --
+    toolbar = QHBoxLayout()
+    
+    toolbar.addStretch()
+    
+    btn_refresh = create_button("Làm mới")
+    btn_refresh.setStyleSheet("background: #38BDF8; color: #07090F; font-weight: bold; padding: 8px; border-radius: 8px;")
+    toolbar.addWidget(btn_refresh)
+    
+    btn_export = create_button("Xuất CSV")
+    btn_export.setStyleSheet("background: #34D399; color: #07090F; font-weight: bold; padding: 8px; border-radius: 8px;")
+    toolbar.addWidget(btn_export)
+    
+    layout.addLayout(toolbar)
+    
+    # -- Bảng dữ liệu --
+    table = create_attendance_table()
+    layout.addWidget(table, stretch=1)
+    
+    return {
+        "page": page,
+        "table": table,
+        "btn_refresh": btn_refresh,
+        "btn_export": btn_export
     }
 
 if __name__ == "__main__":
