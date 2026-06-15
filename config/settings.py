@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # Thư mục gốc của project (chỉnh về ngay trong thư mục refactor)
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Cấu hình Ứng dụng
 APP_NAME = "ClassVision Attendance"
@@ -24,9 +24,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 STUDENTS_CSV = DATA_DIR / "students.csv"
 GALLERY_PATH = DATA_DIR / "gallery.npz"
 ATTENDANCE_SESSIONS_DIR = DATA_DIR / "attendance_sessions"
-MODELS_DIR = PROJECT_ROOT / "models"
-OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 
 # Đảm bảo các thư mục tồn tại
-for d in [DATA_DIR, ATTENDANCE_SESSIONS_DIR, MODELS_DIR, OUTPUTS_DIR]:
+for d in [DATA_DIR, ATTENDANCE_SESSIONS_DIR]:
     d.mkdir(parents=True, exist_ok=True)

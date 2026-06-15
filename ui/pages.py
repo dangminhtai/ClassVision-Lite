@@ -1,16 +1,12 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QComboBox
 )
 from PyQt6.QtCore import Qt
 
-from ui_components import (
+from ui.components import (
     create_button, create_kpi_card, create_attendance_table, create_video_label
 )
-from config import DEFAULT_TOTAL_STUDENTS
+from config.settings import DEFAULT_TOTAL_STUDENTS
 
 def build_realtime_page() -> dict:
     """Xây dựng trang Điểm danh Real-time (Camera)"""

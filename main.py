@@ -6,11 +6,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from main_window import build_main_window
-from workers import start_camera, stop_camera
-from logic import recognize_faces_in_frame, get_all_classes
-from ui_components import draw_boxes_on_image
-from config import DEFAULT_TOTAL_STUDENTS
+from ui.main_window import build_main_window
+from workers.camera import start_camera, stop_camera
+from face.recognizer import recognize_faces_in_frame
+from database.students import get_all_classes, get_students, add_student, update_student, delete_student, get_student_class
+from state.attendance import add_attendance_record, get_attendance_records, get_present_count
+from ui.components import draw_boxes_on_image
+from config.settings import DEFAULT_TOTAL_STUDENTS
 
 class _GuiInvoker(QObject):
     """Lớp ẩn nhỏ bé duy nhất để ép hàm chạy về luồng chính (Main Thread) an toàn"""
@@ -26,47 +28,22 @@ def invoke_in_gui(func):
     except RuntimeError:
         pass # Bỏ qua nếu app đã tắt và _invoker bị hủy
 
-# Biến toàn cục để lưu báo cáo điểm danh (In-memory Lite)
-# Cấu trúc: student_id -> {"name": ..., "class": ..., "time": ..., "source": ...}
-global_attendance = {}
-
-def get_student_class_from_db(sid):
-    """Truy vấn nhanh tên lớp của sinh viên từ Database"""
-    import sqlite3
-    from config import DATA_DIR
-    try:
-        conn = sqlite3.connect(DATA_DIR / "classvision.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT class_name FROM students WHERE student_id = ?", (sid,))
-        row = cursor.fetchone()
-        conn.close()
-        if row and row[0]:
-            return row[0]
-    except Exception:
-        pass
-    return "Không rõ"
-
 def setup_app_logic(ui: dict):
     """Gắn kết logic từ workers vào giao diện"""
     rt_ui = ui["realtime_ui"]
     
     def on_frame_ready(frame, ai_results, fps):
         # Lưu vào danh sách điểm danh
-        from logic import get_students
         import datetime
         time_str = datetime.datetime.now().strftime("%H:%M:%S")
-        # Gọi get_students mỗi lần thì hơi chậm, nhưng sqlite khá nhanh. Tối ưu hơn: cache lại.
-        # Ở đây ta cứ lưu tên do AI trả về trước, Lớp học có thể cập nhật sau.
+        
         for det in ai_results:
             if det.get("status") == "present":
                 sid = det.get("student_id")
-                if sid and sid not in global_attendance:
-                    global_attendance[sid] = {
-                        "name": det.get("name", "Unknown"),
-                        "class": get_student_class_from_db(sid),
-                        "time": time_str,
-                        "source": "Camera"
-                    }
+                if sid:
+                    sname = det.get("name", "Unknown")
+                    sclass = get_student_class(sid)
+                    add_attendance_record(sid, sname, sclass, time_str, "Camera")
                     
         # 1. Vẽ khung OpenCV lên ảnh NGAY TẠI LUỒNG NGẦM (Nhanh, không làm đơ GUI)
         qimg = draw_boxes_on_image(frame, ai_results)
@@ -75,8 +52,8 @@ def setup_app_logic(ui: dict):
         def update_ui():
             from PyQt6.QtGui import QPixmap
             rt_ui["video_label"].setPixmap(QPixmap.fromImage(qimg))
-            # Đếm số người có mặt dựa trên danh sách cộng dồn (tránh việc quay mặt đi là bị trừ số)
-            present_count = len(global_attendance)
+            # Đếm số người có mặt dựa trên danh sách cộng dồn
+            present_count = get_present_count()
             absent_count = max(0, DEFAULT_TOTAL_STUDENTS - present_count)
             
             # Cập nhật KPI Có Mặt (Thẻ thứ 2, index 1)
@@ -135,8 +112,7 @@ def setup_app_logic(ui: dict):
 
 def setup_student_manage_logic(ui):
     from PyQt6.QtWidgets import QTableWidgetItem, QMessageBox
-    from ui_pages import StudentDialog
-    from logic import get_students, add_student, update_student, delete_student
+    from ui.pages import StudentDialog
     
     st_ui = ui["student_ui"]
     table = st_ui["table"]
@@ -223,9 +199,8 @@ def setup_image_attendance_logic(ui):
     from PyQt6.QtWidgets import QFileDialog, QTableWidgetItem, QMessageBox
     from PyQt6.QtGui import QPixmap
     import cv2
-    from logic import recognize_faces_in_frame
-    from ui_components import draw_boxes_on_image
-    from config import DEFAULT_TOTAL_STUDENTS
+    from ui.components import draw_boxes_on_image
+    from config.settings import DEFAULT_TOTAL_STUDENTS
     import datetime
     
     img_ui = ui["image_ui"]
@@ -281,19 +256,15 @@ def setup_image_attendance_logic(ui):
         for row_idx, student in enumerate(detected_students):
             sid = student.get("student_id", "")
             sname = student.get("name", "")
-            if sid and sid not in global_attendance:
-                global_attendance[sid] = {
-                    "name": sname,
-                    "class": get_student_class_from_db(sid),
-                    "time": time_str,
-                    "source": "Ảnh tĩnh"
-                }
+            if sid:
+                sclass = get_student_class(sid)
+                add_attendance_record(sid, sname, sclass, time_str, "Ảnh tĩnh")
                 
             table.insertRow(row_idx)
             table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1))) # STT
             table.setItem(row_idx, 1, QTableWidgetItem(sid)) # MSSV
             table.setItem(row_idx, 2, QTableWidgetItem(sname)) # Name
-            table.setItem(row_idx, 3, QTableWidgetItem(get_student_class_from_db(sid))) # Lớp
+            table.setItem(row_idx, 3, QTableWidgetItem(get_student_class(sid))) # Lớp
             
             # Cột trạng thái
             status_text = "Có mặt" if student.get("status") == "present" else "Cần xem xét"
@@ -326,7 +297,8 @@ def setup_report_logic(ui: dict):
     def refresh_report():
         table.setRowCount(0)
         # Điền dữ liệu từ bộ nhớ đệm
-        for row_idx, (sid, data) in enumerate(global_attendance.items()):
+        attendance_records = get_attendance_records()
+        for row_idx, (sid, data) in enumerate(attendance_records.items()):
             table.insertRow(row_idx)
             table.setItem(row_idx, 0, QTableWidgetItem(str(row_idx + 1)))
             table.setItem(row_idx, 1, QTableWidgetItem(sid))
@@ -348,7 +320,8 @@ def setup_report_logic(ui: dict):
             table.setItem(row_idx, 6, QTableWidgetItem(data["time"]))
             
     def export_csv():
-        if not global_attendance:
+        attendance_records = get_attendance_records()
+        if not attendance_records:
             QMessageBox.warning(None, "Trống", "Không có dữ liệu điểm danh nào để xuất!")
             return
             
@@ -360,7 +333,7 @@ def setup_report_logic(ui: dict):
             with open(path, mode='w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.writer(f)
                 writer.writerow(["STT", "MSSV", "Họ tên", "Lớp", "Trạng thái", "Nguồn", "Thời gian"])
-                for row_idx, (sid, data) in enumerate(global_attendance.items()):
+                for row_idx, (sid, data) in enumerate(attendance_records.items()):
                     writer.writerow([
                         row_idx + 1, sid, data["name"], data["class"], "Có mặt", data["source"], data["time"]
                     ])

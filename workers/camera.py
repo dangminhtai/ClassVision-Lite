@@ -1,13 +1,9 @@
 import time
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import cv2
 import threading
 
-# Chú ý: import trực tiếp, không dùng 'refactor.' để tránh lỗi khi chạy trực tiếp file này
-from logic import recognize_faces_in_frame
-from config import DEFAULT_CAMERA_INDEX, TARGET_FPS, LIVE_RECOGNITION_INTERVAL_MS
+from face.recognizer import recognize_faces_in_frame
+from config.settings import DEFAULT_CAMERA_INDEX, TARGET_FPS, LIVE_RECOGNITION_INTERVAL_MS
 
 # Biến toàn cục để quản lý luồng
 camera_running = False

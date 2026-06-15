@@ -1,20 +1,16 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
     QStackedWidget, QFrame, QLabel
 )
 from PyQt6.QtCore import Qt
 
-from ui_components import APP_STYLE, create_button
-from ui_pages import build_realtime_page, build_student_manage_page, build_image_attendance_page, build_report_page
-
+from ui.components import APP_STYLE, create_button
+from ui.pages import build_realtime_page, build_student_manage_page, build_image_attendance_page, build_report_page
+from config.settings import APP_NAME
 def build_main_window() -> dict:
     """Khởi tạo Cửa sổ chính chứa Sidebar và các trang"""
     window = QMainWindow()
-    window.setWindowTitle("ClassVision - Refactored")
+    window.setWindowTitle(APP_NAME)
     window.setMinimumSize(1024, 700)
     window.setStyleSheet(APP_STYLE)
     
