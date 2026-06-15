@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 APP_NAME = "ClassVision Attendance"
 DEFAULT_CAMERA_INDEX = 0
 TARGET_FPS = 30 # Tốc độ khung hình mục tiêu của Camera
+DEFAULT_TOTAL_STUDENTS = 41 # Sĩ số sinh viên mặc định
 
 # Cấu hình AI & Nhận diện
 LIVE_RECOGNITION_INTERVAL_MS = 700

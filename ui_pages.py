@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt
 from ui_components import (
     create_button, create_kpi_card, create_attendance_table, create_video_label
 )
+from config import DEFAULT_TOTAL_STUDENTS
 
 def build_realtime_page() -> dict:
     """Xây dựng trang Điểm danh Real-time (Camera)"""
@@ -37,10 +38,9 @@ def build_realtime_page() -> dict:
 
     # 2. Thẻ hiển thị số liệu (KPI Cards)
     kpi_layout = QHBoxLayout()
-    kpi_layout.addWidget(create_kpi_card("TỔNG SỐ", "0", "#E2C285"))    # Vàng Gold
+    kpi_layout.addWidget(create_kpi_card("TỔNG SỐ", str(DEFAULT_TOTAL_STUDENTS), "#E2C285"))    # Vàng Gold
     kpi_layout.addWidget(create_kpi_card("CÓ MẶT", "0", "#34D399"))     # Xanh lá
-    kpi_layout.addWidget(create_kpi_card("VẮNG MẶT", "0", "#FB7185"))   # Đỏ
-    kpi_layout.addWidget(create_kpi_card("ĐI TRỄ", "0", "#FBBF24"))      # Cam
+    kpi_layout.addWidget(create_kpi_card("VẮNG MẶT", str(DEFAULT_TOTAL_STUDENTS), "#FB7185"))   # Đỏ
     kpi_layout.addWidget(create_kpi_card("FPS", "0", "#A855F7"))         # Tím
     main_layout.addLayout(kpi_layout)
 

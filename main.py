@@ -10,6 +10,7 @@ from main_window import build_main_window
 from workers import start_camera, stop_camera
 from logic import recognize_faces_in_frame, get_all_classes
 from ui_components import draw_boxes_on_image
+from config import DEFAULT_TOTAL_STUDENTS
 
 class _GuiInvoker(QObject):
     """Lớp ẩn nhỏ bé duy nhất để ép hàm chạy về luồng chính (Main Thread) an toàn"""
@@ -37,11 +38,16 @@ def setup_app_logic(ui: dict):
         def update_ui():
             from PyQt6.QtGui import QPixmap
             rt_ui["video_label"].setPixmap(QPixmap.fromImage(qimg))
+            # Đếm số người có mặt (loại bỏ Unknown)
+            present_count = sum(1 for d in ai_results if d.get("status") != "unknown")
+            absent_count = max(0, DEFAULT_TOTAL_STUDENTS - present_count)
             
-            # Cập nhật KPI Có Mặt
-            rt_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(len(ai_results)))
-            # Cập nhật KPI FPS (Thẻ thứ 5, index 4)
-            rt_ui["kpi_cards"].itemAt(4).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(fps))
+            # Cập nhật KPI Có Mặt (Thẻ thứ 2, index 1)
+            rt_ui["kpi_cards"].itemAt(1).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(present_count))
+            # Cập nhật KPI Vắng Mặt (Thẻ thứ 3, index 2)
+            rt_ui["kpi_cards"].itemAt(2).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(absent_count))
+            # Cập nhật KPI FPS (Thẻ thứ 4, index 3 - do đã xóa thẻ Đi Trễ)
+            rt_ui["kpi_cards"].itemAt(3).widget().layout().itemAt(1).layout().itemAt(1).widget().setText(str(fps))
         
         invoke_in_gui(update_ui)
 
@@ -78,7 +84,7 @@ def main():
     setup_app_logic(ui)
     
     # 3. Hiển thị
-    ui["window"].show()
+    ui["window"].showMaximized()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
