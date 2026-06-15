@@ -162,8 +162,8 @@ def draw_boxes_on_image(cv_image, detections: list) -> QImage:
         name_no_accents = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
         name_no_accents = name_no_accents.replace('đ', 'd').replace('Đ', 'D')
         
-        # Vẽ tên
-        cv2.putText(img, name_no_accents, (x1, max(20, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        # Vẽ tên với kích thước chữ to hơn (0.9 thay vì 0.6)
+        cv2.putText(img, name_no_accents, (x1, max(25, y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
     # Convert sang QPixmap
     rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
