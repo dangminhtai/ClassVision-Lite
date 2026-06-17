@@ -41,7 +41,12 @@ def init_face_model():
         norms = np.linalg.norm(_gallery["embeddings"], axis=1, keepdims=True)
         _gallery["embeddings"] = _gallery["embeddings"] / np.clip(norms, 1e-12, None)
 
-def recognize_faces_in_frame(frame, threshold=0.38, uncertain_margin=0.08):
+def recognize_faces_in_frame(frame, threshold=None, uncertain_margin=None):
+    from config.settings import FACE_MATCH_THRESHOLD, FACE_UNCERTAIN_MARGIN
+    if threshold is None:
+        threshold = FACE_MATCH_THRESHOLD
+    if uncertain_margin is None:
+        uncertain_margin = FACE_UNCERTAIN_MARGIN
     """
     Phân tích 1 frame ảnh từ Camera bằng InsightFace.
     Trả về danh sách kết quả gồm {name, student_id, box, status}
