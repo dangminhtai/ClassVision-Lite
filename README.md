@@ -244,6 +244,6 @@ pip install insightface --upgrade
 ---
 
 **Phát triển bởi**: Nhóm 10
-**Lớp**: 23110CLCAI  
+**Lớp**: DIPR430685_06CLC  
 **Môn học**: Xử Lý Ảnh Số  
 **Năm học**: 2025-2026
