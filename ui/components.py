@@ -145,7 +145,7 @@ def create_team_banner() -> QFrame:
             border-radius: 0px;
         }
     """)
-    banner.setFixedHeight(95) # Fixed height cho Header đủ rộng để không khuất chữ
+    banner.setMinimumHeight(105) # Fixed height cho Header đủ rộng để không khuất chữ
     
     layout = QHBoxLayout(banner)
     layout.setContentsMargins(20, 10, 20, 10)
@@ -160,9 +160,12 @@ def create_team_banner() -> QFrame:
     info_layout = QVBoxLayout()
     info_layout.setSpacing(2)
     
-    class_lbl = QLabel("LỚP: DIPR430685_06CLC")
-    class_lbl.setStyleSheet("color: #E2C285; font-size: 18px; font-weight: bold; background: transparent; border: none;")
+    school_lbl = QLabel("TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM")
+    school_lbl.setStyleSheet("color: #E2C285; font-size: 18px; font-weight: bold; background: transparent; border: none;")
+    info_layout.addWidget(school_lbl)
     
+    class_lbl = QLabel("Lớp: DIPR430685_06CLC")
+    class_lbl.setStyleSheet("color: #F8FAFC; font-size: 14px; font-weight: bold; background: transparent; border: none;")
     info_layout.addWidget(class_lbl)
     
     # Sử dụng QHBoxLayout để đảm bảo các tên nằm ngang
