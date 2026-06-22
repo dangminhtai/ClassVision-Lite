@@ -133,6 +133,68 @@ def create_video_label() -> QLabel:
     lbl = ScalableImageLabel("Đang chờ Camera...")
     return lbl
 
+def create_team_banner() -> QFrame:
+    """Tạo banner thông tin nhóm hiển thị ở Header"""
+    banner = QFrame()
+    banner.setObjectName("Panel")
+    # Sử dụng background gradient mượt mà với viền vàng
+    banner.setStyleSheet("""
+        QFrame#Panel {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0C101A, stop:1 #1E293B);
+            border-bottom: 2px solid #E2C285;
+            border-radius: 0px;
+        }
+    """)
+    banner.setFixedHeight(95) # Fixed height cho Header đủ rộng để không khuất chữ
+    
+    layout = QHBoxLayout(banner)
+    layout.setContentsMargins(20, 10, 20, 10)
+    layout.setSpacing(15)
+    
+    # 1. Logo trường hoặc Icon (dùng chữ nếu không có ảnh)
+    icon_lbl = QLabel("🎓")
+    icon_lbl.setStyleSheet("font-size: 36px; background: transparent; border: none;")
+    layout.addWidget(icon_lbl)
+    
+    # 2. Thông tin chính (Vbox: Lớp + Danh sách SV)
+    info_layout = QVBoxLayout()
+    info_layout.setSpacing(2)
+    
+    class_lbl = QLabel("LỚP: DIPR430685_06CLC")
+    class_lbl.setStyleSheet("color: #E2C285; font-size: 18px; font-weight: bold; background: transparent; border: none;")
+    
+    info_layout.addWidget(class_lbl)
+    
+    # Sử dụng QHBoxLayout để đảm bảo các tên nằm ngang
+    members_layout = QHBoxLayout()
+    members_layout.setSpacing(15)
+    
+    members = [
+        "<b>Dương Minh Duy:</b> 23110083",
+        "<b>Đặng Minh Tài:</b> 23110148",
+        "<b>Nguyễn Vũ Bảo:</b> 23110079",
+        "<b>Phan Hồng Phúc:</b> 23110141"
+    ]
+    
+    for i, member in enumerate(members):
+        lbl = QLabel(member)
+        lbl.setStyleSheet("color: #F8FAFC; font-size: 14px; background: transparent; border: none;")
+        members_layout.addWidget(lbl)
+        
+        # Thêm dấu phân cách nếu không phải phần tử cuối
+        if i < len(members) - 1:
+            sep = QLabel("|")
+            sep.setStyleSheet("color: #64748B; font-size: 14px; background: transparent; border: none;")
+            members_layout.addWidget(sep)
+            
+    members_layout.addStretch()
+    info_layout.addLayout(members_layout)
+    
+    layout.addLayout(info_layout)
+    layout.addStretch() # Đẩy mọi thứ sang trái
+    
+    return banner
+
 def draw_boxes_on_image(cv_image, detections: list) -> QImage:
     """
     Vẽ khung nhận diện khuôn mặt lên ảnh bằng OpenCV thuần túy.

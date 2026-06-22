@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 import sys
 
-from ui.components import APP_STYLE, create_button
+from ui.components import APP_STYLE, create_button, create_team_banner
 from ui.pages import build_realtime_page, build_student_manage_page, build_image_attendance_page, build_report_page
 from config.settings import APP_NAME
 def build_main_window() -> dict:
@@ -19,9 +19,19 @@ def build_main_window() -> dict:
     root_widget.setObjectName("AppRoot")
     window.setCentralWidget(root_widget)
     
-    main_layout = QHBoxLayout(root_widget)
+    main_layout = QVBoxLayout(root_widget)
     main_layout.setContentsMargins(0, 0, 0, 0)
     main_layout.setSpacing(0)
+    
+    # Thêm Header Banner
+    banner = create_team_banner()
+    main_layout.addWidget(banner)
+    
+    # Tạo layout ngang chứa Sidebar và Stack (nội dung chính)
+    content_layout = QHBoxLayout()
+    content_layout.setContentsMargins(0, 0, 0, 0)
+    content_layout.setSpacing(0)
+    main_layout.addLayout(content_layout)
     
     # 1. Tạo Sidebar (Thanh menu bên trái)
     sidebar = QFrame()
@@ -45,7 +55,7 @@ def build_main_window() -> dict:
     sidebar_layout.addWidget(btn_nav_report)
     sidebar_layout.addStretch()
     
-    main_layout.addWidget(sidebar)
+    content_layout.addWidget(sidebar)
     
     # 2. Vùng chứa nội dung trang (QStackedWidget)
     stack = QStackedWidget()
@@ -61,7 +71,7 @@ def build_main_window() -> dict:
     stack.addWidget(student_ui["page"])       # index 2
     stack.addWidget(report_ui["page"])        # index 3
     
-    main_layout.addWidget(stack)
+    content_layout.addWidget(stack)
     
     # 3. Logic chuyển trang cơ bản
     btn_nav_camera.clicked.connect(lambda: stack.setCurrentIndex(0))
