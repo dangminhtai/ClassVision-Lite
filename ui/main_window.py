@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QFrame, QLabel
 )
 from PyQt6.QtCore import Qt
+import sys
 
 from ui.components import APP_STYLE, create_button
 from ui.pages import build_realtime_page, build_student_manage_page, build_image_attendance_page, build_report_page

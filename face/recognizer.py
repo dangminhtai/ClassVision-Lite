@@ -13,6 +13,7 @@ _gallery = None
 def init_face_model():
     """Hàm tải model InsightFace và đọc file gallery.npz (Chạy 1 lần duy nhất)"""
     global _face_app, _gallery
+    # pyrefly: ignore [missing-import]
     from config.settings import INSIGHTFACE_MODEL, INSIGHTFACE_USE_GPU, INSIGHTFACE_DET_SIZE, GALLERY_PATH
     
     if _face_app is None:
@@ -42,6 +43,7 @@ def init_face_model():
         _gallery["embeddings"] = _gallery["embeddings"] / np.clip(norms, 1e-12, None)
 
 def recognize_faces_in_frame(frame, threshold=None, uncertain_margin=None):
+    # pyrefly: ignore [missing-import]
     from config.settings import FACE_MATCH_THRESHOLD, FACE_UNCERTAIN_MARGIN
     if threshold is None:
         threshold = FACE_MATCH_THRESHOLD
@@ -78,7 +80,7 @@ def recognize_faces_in_frame(frame, threshold=None, uncertain_margin=None):
         query_emb = np.asarray(face.embedding, dtype=np.float32)
         norm = np.linalg.norm(query_emb)
         if norm > 1e-12:
-            query_emb = query_emb / norm
+            query_emb = query_emb / float(norm)
             
         # Nếu chưa có thư viện sinh viên (gallery.npz bị thiếu)
         if _gallery is None or len(_gallery["embeddings"]) == 0:
